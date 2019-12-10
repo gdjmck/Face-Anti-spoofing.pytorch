@@ -1,4 +1,4 @@
-from train import Net, validate
+from train import Net
 from torch.utils.data import DataLoader
 from PIL import Image
 import os
@@ -63,6 +63,68 @@ def faceCrop(img):
         if (h <= 0) or (w <= 0) or (x < 0) or (y < 0):
             return img
     return Image.fromarray(img[y: y+h, x: x+w, :])
+
+invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                     std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                     std = [ 1., 1., 1. ]),
+                               ])
+
+def validate(device, net, val_loader, depth_dir = './depth_predict'):
+    try:
+        shutil.rmtree(depth_dir)
+    except:
+        pass
+    try:
+        os.makedirs(depth_dir)
+    except:
+        pass
+    toImage = standard_transforms.ToPILImage(mode='L')
+    net.eval()
+    live_scores = []
+    fake_scores = []
+    for i, data in enumerate(val_loader):
+        input, label = data
+        img = invTrans(input)
+        print(type(img), img.size())
+        input = input.cuda(device)
+        output, class_ret = net(input)
+        out_depth = output[:,0,:,:]
+        out_depth = out_depth.detach().cpu()
+        class_ret = class_ret.detach().cpu()
+        image = toImage(out_depth)
+        class_output = nn.functional.softmax(class_ret, dim = 1)
+        score = class_output[0][1]
+        if label == 0:
+            fake_scores.append(score)
+            name = '' + depth_dir + '/fake-' + str(i) + '.bmp'
+            image.save(name)
+            img.save(name.replace('bmp', 'jpg'))
+
+        if label == 1:
+            live_scores.append(score)
+            name = '' + depth_dir + '/live-' + str(i) + '.bmp'
+            image.save(name)
+            img.save(name.replace('bmp', 'jpg'))
+
+    live_scores.sort()
+    fake_scores.sort(reverse=True)
+    fake_error = 0
+    live_error = 0
+    for val in fake_scores:
+        if val >= 0.50:
+            fake_error += 1
+        else:
+            break
+
+    for val in live_scores:
+        if val <= 0.50:
+            live_error += 1
+        else:
+            break
+
+    print('threshold 0.5: frp = ', fake_error / len(fake_scores),  '; tpr = ', (len(live_scores) - live_error) / len(live_scores))
+
 
 if __name__ == '__main__':
     args = parse_args()
