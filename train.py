@@ -20,22 +20,23 @@ train_fake_rgb_dir   = './data/fake_train_face_rgb'
 test_live_rgb_dir    = './data/live_test_face_rgb'
 test_fake_rgb_dir    = './data/fake_test_face_rgb'
 
-parser = argparse.ArgumentParser(description='PyTorch Liveness Training')
-parser.add_argument('-s', '--scale', default=1.0, type=float,
-                    metavar='N', help='net scale')
-parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
-                    help='number of data loading workers (default: 4)')
-parser.add_argument('--epochs', default=90, type=int, metavar='N',
-                    help='number of total epochs to run')
-parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
-                    help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=256, type=int,
-                    metavar='N', help='mini-batch size (default: 256)')
-parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                    help='path to latest checkpoint (default: none)')
-parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
-                    help='evaluate model on validation set')
-
+def parse_args():
+    parser = argparse.ArgumentParser(description='PyTorch Liveness Training')
+    parser.add_argument('-s', '--scale', default=1.0, type=float,
+                        metavar='N', help='net scale')
+    parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
+                        help='number of data loading workers (default: 4)')
+    parser.add_argument('--epochs', default=90, type=int, metavar='N',
+                        help='number of total epochs to run')
+    parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
+                        help='manual epoch number (useful on restarts)')
+    parser.add_argument('-b', '--batch-size', default=256, type=int,
+                        metavar='N', help='mini-batch size (default: 256)')
+    parser.add_argument('--resume', default='', type=str, metavar='PATH',
+                        help='path to latest checkpoint (default: none)')
+    parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
+                        help='evaluate model on validation set')
+    return parser
 
 class Net(nn.Module):
     def __init__(self, scale = 1.0,expand_ratio=1):
@@ -314,4 +315,4 @@ def train(device, net, train_loader, criterion_depth, criterion_class, optimizer
 
 
 if __name__ == '__main__':
-    main(parser.parse_args())
+    main(parse_args().parse_args())
