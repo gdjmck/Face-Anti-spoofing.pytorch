@@ -137,9 +137,9 @@ class DepthFocalLoss(nn.Module):
         return loss.mean()
 
 def main(args):
-    device = torch.device('cuda:5')
+    device = torch.device('cuda:0')
     net = Net(args.scale)
-    net = nn.DataParallel(net, device_ids = [5, 6, 7, 8])
+    net = nn.DataParallel(net, device_ids = [0])
     net = net.to(device)
     print(net)
     print("start load train data")
